@@ -16,6 +16,6 @@ public class SmokeTest extends BaseTest {
         .when()
             .get("/booking")
         .then()
-            .statusCode(200);
+            .statusCode(999);
     }
 }
