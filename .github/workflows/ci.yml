@@ -1,0 +1,58 @@
+name: CI
+
+# Run the test suite on every push and pull request so failing changes are
+# caught before they reach the main branch (quality gate).
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Build and test
+    runs-on: ubuntu-latest
+
+    # Allow the test reporter to publish results as a check on the run.
+    permissions:
+      contents: read
+      checks: write
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      # Java 21 matches the local toolchain and the compiler target in pom.xml.
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Run tests
+        env:
+          # Credentials are injected from repository secrets, never hardcoded.
+          RESTFUL_BOOKER_USERNAME: ${{ secrets.RESTFUL_BOOKER_USERNAME }}
+          RESTFUL_BOOKER_PASSWORD: ${{ secrets.RESTFUL_BOOKER_PASSWORD }}
+        run: mvn -B clean test
+
+      # Publish the raw Surefire reports as a downloadable artifact. `if: always()`
+      # ensures reports are uploaded even when tests fail, so failures can be
+      # inspected from the run page.
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: target/surefire-reports/
+          retention-days: 30
+
+      # Render a pass/fail summary on the run page from the JUnit-style XML.
+      - name: Publish test summary
+        if: always()
+        uses: dorny/test-reporter@v1
+        with:
+          name: Test results
+          path: target/surefire-reports/TEST-*.xml
+          reporter: java-junit
