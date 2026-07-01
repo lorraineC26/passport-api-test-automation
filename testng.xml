@@ -22,4 +22,9 @@
             <class name="tests.NegativeTests"/>
         </classes>
     </test>
+    <test name="DataDriven">
+        <classes>
+            <class name="tests.DataDrivenTests"/>
+        </classes>
+    </test>
 </suite>
