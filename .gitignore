@@ -1,0 +1,24 @@
+# ---- Maven build output ----
+target/
+
+# ---- IDE / editor ----
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+.project
+.classpath
+.settings/
+
+# ---- macOS ----
+.DS_Store
+
+# ---- Logs / temp ----
+*.log
+*.tmp
+
+# ---- Owner-facing local docs ----
+project_build_plan.md
+LEARNING_NOTES_zh.md
+CLAUDE.md
