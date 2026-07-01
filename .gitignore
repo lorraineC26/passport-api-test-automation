@@ -11,6 +11,9 @@ target/
 .classpath
 .settings/
 
+# ---- Claude Code local config ----
+.claude/
+
 # ---- macOS ----
 .DS_Store
 
