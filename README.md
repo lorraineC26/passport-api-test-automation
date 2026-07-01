@@ -97,6 +97,15 @@ A failing test turns the run red and blocks the change (quality gate). Both the
 artifact upload and the summary use `if: always()`, so reports are published even
 when tests fail.
 
+A passing run:
+
+![CI run passing](doc/ci-run-passing.png)
+
+The quality gate in action: a deliberately broken assertion turns the run red,
+and the report is still uploaded because the upload step uses `if: always()`.
+
+![CI run failing](doc/ci-run-failing.png)
+
 ### CI credentials
 
 The workflow injects the API credentials from repository secrets. In the GitHub
