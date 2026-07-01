@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd \"/Users/Yeechne/Desktop/Genesys Test Automation /passport-api-test-automation\" && rm src/test/java/tests/DebugTest.java && echo removed)"
+    ],
+    "additionalDirectories": [
+      "/Users/Yeechne/Desktop/Genesys Test Automation /passport-api-test-automation/src/test/java/tests"
+    ]
+  }
+}

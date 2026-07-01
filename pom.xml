@@ -15,6 +15,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <rest-assured.version>5.5.0</rest-assured.version>
         <testng.version>7.10.2</testng.version>
+        <jackson.version>2.18.2</jackson.version>
         <surefire.version>3.5.2</surefire.version>
     </properties>
 
@@ -32,6 +33,14 @@
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
             <version>${testng.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Jackson: serializes Java objects to JSON request bodies for REST Assured -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

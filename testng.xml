@@ -7,4 +7,19 @@
             <class name="tests.SmokeTest"/>
         </classes>
     </test>
+    <test name="Auth">
+        <classes>
+            <class name="tests.AuthTests"/>
+        </classes>
+    </test>
+    <test name="Functional">
+        <classes>
+            <class name="tests.BookingTests"/>
+        </classes>
+    </test>
+    <test name="Negative">
+        <classes>
+            <class name="tests.NegativeTests"/>
+        </classes>
+    </test>
 </suite>
