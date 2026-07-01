@@ -1,34 +1,29 @@
 package tests;
 
+import config.BaseTest;
+import helpers.BookingApi;
+import helpers.BookingFactory;
 import helpers.Credentials;
-import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.notNullValue;
 
 /**
  * Functional (positive) tests covering the booking CRUD lifecycle.
  * Each test creates the data it needs so tests stay independent.
  */
-public class BookingTests {
-
-    @BeforeClass
-    public void setBaseUri() {
-        RestAssured.baseURI = "https://restful-booker.herokuapp.com";
-    }
+public class BookingTests extends BaseTest {
 
     @Test
     public void getAllBookingsReturnsList() {
-        given()
-            .accept("application/json")
+        given(spec)
         .when()
             .get("/booking")
         .then()
@@ -38,10 +33,9 @@ public class BookingTests {
 
     @Test
     public void createBookingReturnsBookingId() {
-        given()
+        given(spec)
             .contentType(ContentType.JSON)
-            .accept("application/json")
-            .body(sampleBooking("John", "Smith"))
+            .body(BookingFactory.booking("John", "Smith"))
         .when()
             .post("/booking")
         .then()
@@ -53,10 +47,9 @@ public class BookingTests {
 
     @Test
     public void getBookingByIdReturnsPersistedFields() {
-        int id = createBooking(sampleBooking("Alice", "Brown"));
+        int id = BookingApi.createBooking(spec, BookingFactory.booking("Alice", "Brown"));
 
-        given()
-            .accept("application/json")
+        given(spec)
         .when()
             .get("/booking/{id}", id)
         .then()
@@ -70,30 +63,27 @@ public class BookingTests {
     public void filterBookingsByNameReturnsMatch() {
         // Unique last name so the filter matches only this record.
         String lastName = "Filterby" + System.nanoTime();
-        int id = createBooking(sampleBooking("Grace", lastName));
+        int id = BookingApi.createBooking(spec, BookingFactory.booking("Grace", lastName));
 
-        given()
-            .accept("application/json")
+        given(spec)
             .queryParam("firstname", "Grace")
             .queryParam("lastname", lastName)
         .when()
             .get("/booking")
         .then()
             .statusCode(200)
-            .body("bookingid", org.hamcrest.Matchers.hasItem(id));
+            .body("bookingid", hasItem(id));
     }
 
     @Test
     public void updateBookingWithTokenAppliesChanges() {
-        int id = createBooking(sampleBooking("Mark", "Green"));
-        String token = getAuthToken();
+        int id = BookingApi.createBooking(spec, BookingFactory.booking("Mark", "Green"));
+        String token = BookingApi.authToken(spec, Credentials.username(), Credentials.password());
 
-        Map<String, Object> updated = sampleBooking("Mark", "Grey");
-        updated.put("totalprice", 999);
+        Map<String, Object> updated = BookingFactory.booking("Mark", "Grey", 999);
 
-        given()
+        given(spec)
             .contentType(ContentType.JSON)
-            .accept("application/json")
             .cookie("token", token)
             .body(updated)
         .when()
@@ -106,12 +96,11 @@ public class BookingTests {
 
     @Test
     public void partialUpdateBookingWithTokenAppliesChanges() {
-        int id = createBooking(sampleBooking("Nina", "Black"));
-        String token = getAuthToken();
+        int id = BookingApi.createBooking(spec, BookingFactory.booking("Nina", "Black"));
+        String token = BookingApi.authToken(spec, Credentials.username(), Credentials.password());
 
-        given()
+        given(spec)
             .contentType(ContentType.JSON)
-            .accept("application/json")
             .cookie("token", token)
             .body(Map.of("firstname", "Nadia"))
         .when()
@@ -124,10 +113,10 @@ public class BookingTests {
 
     @Test
     public void deleteBookingWithTokenSucceeds() {
-        int id = createBooking(sampleBooking("Oscar", "White"));
-        String token = getAuthToken();
+        int id = BookingApi.createBooking(spec, BookingFactory.booking("Oscar", "White"));
+        String token = BookingApi.authToken(spec, Credentials.username(), Credentials.password());
 
-        given()
+        given(spec)
             .cookie("token", token)
         .when()
             .delete("/booking/{id}", id)
@@ -135,51 +124,10 @@ public class BookingTests {
             .statusCode(201);
 
         // Confirm it is gone.
-        given()
-            .accept("application/json")
+        given(spec)
         .when()
             .get("/booking/{id}", id)
         .then()
             .statusCode(404);
-    }
-
-    // --- helpers kept local to this class until the phase 4 refactor ---
-
-    private Map<String, Object> sampleBooking(String firstName, String lastName) {
-        Map<String, Object> dates = new HashMap<>();
-        dates.put("checkin", "2025-01-01");
-        dates.put("checkout", "2025-01-05");
-
-        Map<String, Object> booking = new HashMap<>();
-        booking.put("firstname", firstName);
-        booking.put("lastname", lastName);
-        booking.put("totalprice", 150);
-        booking.put("depositpaid", true);
-        booking.put("bookingdates", dates);
-        booking.put("additionalneeds", "Breakfast");
-        return booking;
-    }
-
-    private int createBooking(Map<String, Object> payload) {
-        return given()
-            .contentType(ContentType.JSON)
-            .accept("application/json")
-            .body(payload)
-        .when()
-            .post("/booking")
-        .then()
-            .statusCode(200)
-            .extract().path("bookingid");
-    }
-
-    private String getAuthToken() {
-        return given()
-            .contentType(ContentType.JSON)
-            .body(Map.of("username", Credentials.username(), "password", Credentials.password()))
-        .when()
-            .post("/auth")
-        .then()
-            .statusCode(200)
-            .extract().path("token");
     }
 }

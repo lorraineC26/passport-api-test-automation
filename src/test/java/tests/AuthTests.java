@@ -1,9 +1,8 @@
 package tests;
 
+import config.BaseTest;
 import helpers.Credentials;
-import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.util.Map;
@@ -18,16 +17,11 @@ import static org.hamcrest.Matchers.not;
  * restful-booker returns the session token in the JSON body, which is then
  * sent back as a Cookie (token=...) on write operations.
  */
-public class AuthTests {
-
-    @BeforeClass
-    public void setBaseUri() {
-        RestAssured.baseURI = "https://restful-booker.herokuapp.com";
-    }
+public class AuthTests extends BaseTest {
 
     @Test
     public void authWithValidCredentialsReturnsToken() {
-        given()
+        given(spec)
             .contentType(ContentType.JSON)
             .body(Map.of("username", Credentials.username(), "password", Credentials.password()))
         .when()
@@ -40,7 +34,7 @@ public class AuthTests {
     @Test
     public void authWithInvalidCredentialsReturnsBadCredentials() {
         // restful-booker answers 200 with a "reason" field instead of a 401.
-        given()
+        given(spec)
             .contentType(ContentType.JSON)
             .body(Map.of("username", "wrong", "password", "wrong"))
         .when()
@@ -53,7 +47,7 @@ public class AuthTests {
 
     @Test
     public void authWithMissingPasswordReturnsBadCredentials() {
-        given()
+        given(spec)
             .contentType(ContentType.JSON)
             .body(Map.of("username", Credentials.username()))
         .when()

@@ -1,12 +1,12 @@
 package tests;
 
+import config.BaseTest;
+import helpers.BookingApi;
+import helpers.BookingFactory;
 import helpers.Credentials;
-import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import static io.restassured.RestAssured.given;
@@ -16,17 +16,11 @@ import static org.hamcrest.Matchers.equalTo;
 /**
  * Negative tests: the API must reject invalid input and unauthorized writes.
  */
-public class NegativeTests {
-
-    @BeforeClass
-    public void setBaseUri() {
-        RestAssured.baseURI = "https://restful-booker.herokuapp.com";
-    }
+public class NegativeTests extends BaseTest {
 
     @Test
     public void getBookingWithNonExistentIdReturns404() {
-        given()
-            .accept("application/json")
+        given(spec)
         .when()
             .get("/booking/{id}", 9999999)
         .then()
@@ -35,9 +29,9 @@ public class NegativeTests {
 
     @Test
     public void deleteWithoutTokenReturns403() {
-        int id = createBooking();
+        int id = BookingApi.createBooking(spec, BookingFactory.booking("Temp", "Record"));
 
-        given()
+        given(spec)
         .when()
             .delete("/booking/{id}", id)
         .then()
@@ -46,9 +40,9 @@ public class NegativeTests {
 
     @Test
     public void updateWithoutTokenReturns403() {
-        int id = createBooking();
+        int id = BookingApi.createBooking(spec, BookingFactory.booking("Temp", "Record"));
 
-        given()
+        given(spec)
             .contentType(ContentType.JSON)
             .body(Map.of("firstname", "NoAuth"))
         .when()
@@ -59,9 +53,9 @@ public class NegativeTests {
 
     @Test
     public void deleteWithInvalidTokenReturns403() {
-        int id = createBooking();
+        int id = BookingApi.createBooking(spec, BookingFactory.booking("Temp", "Record"));
 
-        given()
+        given(spec)
             .cookie("token", "not-a-real-token")
         .when()
             .delete("/booking/{id}", id)
@@ -72,7 +66,7 @@ public class NegativeTests {
     @Test
     public void createBookingWithMissingFieldsIsRejected() {
         // Missing required fields; restful-booker responds with a 5xx error.
-        given()
+        given(spec)
             .contentType(ContentType.JSON)
             .body(Map.of("firstname", "OnlyName"))
         .when()
@@ -83,8 +77,8 @@ public class NegativeTests {
 
     @Test
     public void createBookingWithoutContentTypeIsRejected() {
-        // No Content-Type means the server cannot parse the body.
-        given()
+        // No JSON Content-Type means the server cannot parse the body.
+        given(spec)
             .body("firstname=John")
         .when()
             .post("/booking")
@@ -94,11 +88,10 @@ public class NegativeTests {
 
     @Test
     public void updateNonExistentBookingReturnsError() {
-        String token = getAuthToken();
+        String token = BookingApi.authToken(spec, Credentials.username(), Credentials.password());
 
-        given()
+        given(spec)
             .contentType(ContentType.JSON)
-            .accept("application/json")
             .cookie("token", token)
             .body(Map.of("firstname", "Ghost", "lastname", "User"))
         .when()
@@ -110,47 +103,10 @@ public class NegativeTests {
 
     @Test
     public void getBookingWithNonNumericIdReturns404() {
-        given()
-            .accept("application/json")
+        given(spec)
         .when()
             .get("/booking/{id}", "abc")
         .then()
             .statusCode(404);
-    }
-
-    // --- local helpers, extracted in the phase 4 refactor ---
-
-    private int createBooking() {
-        Map<String, Object> dates = new HashMap<>();
-        dates.put("checkin", "2025-01-01");
-        dates.put("checkout", "2025-01-05");
-
-        Map<String, Object> booking = new HashMap<>();
-        booking.put("firstname", "Temp");
-        booking.put("lastname", "Record");
-        booking.put("totalprice", 100);
-        booking.put("depositpaid", true);
-        booking.put("bookingdates", dates);
-
-        return given()
-            .contentType(ContentType.JSON)
-            .accept("application/json")
-            .body(booking)
-        .when()
-            .post("/booking")
-        .then()
-            .statusCode(200)
-            .extract().path("bookingid");
-    }
-
-    private String getAuthToken() {
-        return given()
-            .contentType(ContentType.JSON)
-            .body(Map.of("username", Credentials.username(), "password", Credentials.password()))
-        .when()
-            .post("/auth")
-        .then()
-            .statusCode(200)
-            .extract().path("token");
     }
 }

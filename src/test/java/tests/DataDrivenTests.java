@@ -1,12 +1,11 @@
 package tests;
 
-import io.restassured.RestAssured;
+import config.BaseTest;
+import helpers.BookingFactory;
 import io.restassured.http.ContentType;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import static io.restassured.RestAssured.given;
@@ -19,12 +18,7 @@ import static org.hamcrest.Matchers.greaterThan;
  * so a single method produces one independent test instance per row. This keeps
  * coverage broad without duplicating assertion logic.
  */
-public class DataDrivenTests {
-
-    @BeforeClass
-    public void setBaseUri() {
-        RestAssured.baseURI = "https://restful-booker.herokuapp.com";
-    }
+public class DataDrivenTests extends BaseTest {
 
     @DataProvider(name = "validBookingData")
     public Object[][] validBookingData() {
@@ -40,10 +34,9 @@ public class DataDrivenTests {
 
     @Test(dataProvider = "validBookingData")
     public void createBookingWithVariedGuests(String firstName, String lastName, int totalPrice) {
-        given()
+        given(spec)
             .contentType(ContentType.JSON)
-            .accept("application/json")
-            .body(booking(firstName, lastName, totalPrice))
+            .body(BookingFactory.booking(firstName, lastName, totalPrice))
         .when()
             .post("/booking")
         .then()
@@ -68,8 +61,7 @@ public class DataDrivenTests {
 
     @Test(dataProvider = "invalidBookingIds")
     public void getBookingWithInvalidIdReturns404(String id) {
-        given()
-            .accept("application/json")
+        given(spec)
         .when()
             .get("/booking/{id}", id)
         .then()
@@ -91,7 +83,7 @@ public class DataDrivenTests {
 
     @Test(dataProvider = "invalidCredentials")
     public void authWithInvalidCredentialsIsRejected(String username, String password) {
-        given()
+        given(spec)
             .contentType(ContentType.JSON)
             .body(Map.of("username", username, "password", password))
         .when()
@@ -100,20 +92,5 @@ public class DataDrivenTests {
             .statusCode(200)
             .body("reason", equalTo("Bad credentials"))
             .body("token", emptyOrNullString());
-    }
-
-    private Map<String, Object> booking(String firstName, String lastName, int totalPrice) {
-        Map<String, Object> dates = new HashMap<>();
-        dates.put("checkin", "2025-01-01");
-        dates.put("checkout", "2025-01-05");
-
-        Map<String, Object> booking = new HashMap<>();
-        booking.put("firstname", firstName);
-        booking.put("lastname", lastName);
-        booking.put("totalprice", totalPrice);
-        booking.put("depositpaid", true);
-        booking.put("bookingdates", dates);
-        booking.put("additionalneeds", "Breakfast");
-        return booking;
     }
 }
